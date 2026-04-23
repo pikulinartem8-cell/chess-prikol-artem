@@ -1,0 +1,71 @@
+:root {
+  --bg: #0b0912;
+  --panel: #161224;
+  --panel-light: #231d38;
+  --accent: #d9b96a;
+  --royal: #6f47c7;
+  --text: #f4eeff;
+  --muted: #a394c5;
+  --line: #3d3452;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0; font-family: 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg); color: var(--text); line-height: 1.8;
+}
+
+.container { width: min(1100px, 94vw); margin: 0 auto; }
+
+header {
+  padding: 25px 0; display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid var(--line); margin-bottom: 30px;
+}
+
+.logo { font-size: 1.6rem; font-weight: 800; color: var(--accent); letter-spacing: 1px; }
+
+nav a {
+  color: var(--muted); text-decoration: none; margin-left: 25px;
+  font-weight: 600; transition: 0.3s;
+}
+nav a:hover, nav a.active { color: var(--accent); }
+
+.card {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 20px; padding: 40px; margin-bottom: 30px;
+}
+
+/* Стили для теории с эффектом прилипания */
+.grid-theory { 
+  display: grid; 
+  grid-template-columns: 1.2fr 0.8fr; 
+  gap: 50px; 
+  align-items: start; 
+}
+
+.theory-image-wrap { 
+  position: sticky; 
+  top: 40px; 
+}
+
+.theory-img {
+  width: 100%; border-radius: 15px; border: 2px solid var(--accent);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+}
+
+.btn {
+  display: inline-block; padding: 14px 30px; background: var(--royal);
+  color: white; text-decoration: none; border-radius: 10px;
+  font-weight: bold; border: none; cursor: pointer; transition: 0.3s;
+}
+.btn:hover { background: var(--accent); color: var(--bg); transform: translateY(-3px); }
+
+/* Таймеры для игры */
+.timer {
+  font-size: 3rem; font-family: monospace; background: #000;
+  padding: 10px 20px; border-radius: 10px; border: 2px solid var(--line);
+  color: #555; text-align: center;
+}
+.timer.active { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 15px var(--accent); }
+
+@media (max-width: 850px) { .grid-theory { grid-template-columns: 1fr; } .theory-image-wrap { position: static; } }
