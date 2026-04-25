@@ -102,4 +102,178 @@
     
     <div style="text-align: left; background: var(--panel-light); padding: 15px; border-radius: 10px; margin-bottom: 20px; font-size: 0.9rem;">
       <p>• Режим: <strong>3 мин + 2 сек</strong></p>
+      <p>• Управление: <strong>Клик по фигуре</strong></p>
+    </div>
+
+    <button class="btn" style="width: 100%; margin-bottom: 10px;" onclick="location.reload()">Начать заново</button>
+    <a href="theory.html" class="btn" style="width: 100%; background: #444; text-decoration: none; display: inline-block;">Учить теорию</a>
+  </div>
+
+</main>
+
+<script>
+  var board = null;
+  var game = new Chess();
+  var selectedSquare = null;
+  var pendingMove = null;
+
+  // Таймеры: 180 секунд (3 мин) + 2 секунды добавления
+  var wTime = 180, bTime = 180;
+  var increment = 2;
+  var timer = null;
+
+  // Очистка всех подсветок
+  function removeHighlights() {
+    $('#board .square-55d63').removeClass('highlight-move highlight-selected');
+  }
+
+  // Подсветка выбранной клетки
+  function highlightSquare(square) {
+    $('#board .square-' + square).addClass('highlight-selected');
+  }
+
+  // Подсветка доступных ходов
+  function highlightMoves(moves) {
+    moves.forEach(function(m) {
+      $('#board .square-' + m.to).addClass('highlight-move');
+    });
+  }
+
+  // Логика клика по доске
+  function onSquareClick(square) {
+    var piece = game.get(square);
+
+    // 1. Если кликнули по своей фигуре — выбираем её и показываем ходы
+    if (piece && piece.color === game.turn()) {
+      removeHighlights();
+      selectedSquare = square;
+      highlightSquare(square);
+      var moves = game.moves({ square: square, verbose: true });
+      highlightMoves(moves);
+      return;
+    }
+
+    // 2. Если фигура уже выбрана, пытаемся сделать ход на целевую клетку
+    if (selectedSquare) {
+      var moveOptions = { from: selectedSquare, to: square, promotion: 'q' };
       
+      // Проверяем, является ли ход превращением пешки
+      var moves = game.moves({ square: selectedSquare, verbose: true });
+      var isPromotion = moves.some(m => m.to === square && m.flags.includes('p'));
+
+      if (isPromotion) {
+        pendingMove = { from: selectedSquare, to: square };
+        $('#promotion-modal').show();
+        return;
+      }
+
+      executeMove(moveOptions);
+    }
+  }
+
+  // Выбор фигуры в модальном окне
+  function selectPromotion(pieceType) {
+    $('#promotion-modal').hide();
+    if (pendingMove) {
+      pendingMove.promotion = pieceType;
+      executeMove(pendingMove);
+      pendingMove = null;
+    }
+  }
+
+  // Выполнение хода
+  function executeMove(moveData) {
+    var move = game.move(moveData);
+    
+    // Если ход недопустим — сбрасываем выбор
+    if (move === null) {
+      removeHighlights();
+      selectedSquare = null;
+      return;
+    }
+
+    // Инкремент +2 секунды (добавляем тому, кто только что походил)
+    if (game.turn() === 'b') { 
+      wTime += increment; 
+    } else { 
+      bTime += increment; 
+    }
+
+    // Обновляем UI
+    renderT('t-white', wTime);
+    renderT('t-black', bTime);
+    
+    board.position(game.fen());
+    removeHighlights();
+    selectedSquare = null;
+
+    // Запуск таймера при первом ходе
+    if (!timer) timer = setInterval(tick, 1000);
+
+    // Авто-поворот доски
+    board.orientation(game.turn() === 'w' ? 'white' : 'black');
+    
+    // Активный таймер
+    $('.timer').removeClass('active');
+    $(game.turn() === 'w' ? '#t-white' : '#t-black').addClass('active');
+
+    updateStatus();
+  }
+
+  // Обновление текстового статуса игры
+  function updateStatus() {
+    var status = game.turn() === 'w' ? 'Ход белых' : 'Ход черных';
+    
+    if (game.in_checkmate()) {
+      status = 'МАТ! Победили ' + (game.turn() === 'w' ? 'черные' : 'белые');
+      clearInterval(timer);
+    } else if (game.in_draw()) {
+      status = 'НИЧЬЯ!';
+      clearInterval(timer);
+    } else if (game.in_check()) {
+      status += ' (ШАХ!)';
+    }
+
+    $('#status').text(status);
+  }
+
+  // Работа часов
+  function tick() {
+    if (game.turn() === 'w') wTime--; else bTime--;
+    
+    renderT('t-white', wTime);
+    renderT('t-black', bTime);
+    
+    if (wTime <= 0 || bTime <= 0) {
+      clearInterval(timer);
+      alert('Время вышло! ' + (wTime <= 0 ? 'Черные победили' : 'Белые победили'));
+    }
+  }
+
+  // Отрисовка времени в формате MM:SS
+  function renderT(id, seconds) {
+    if (seconds < 0) seconds = 0;
+    var m = Math.floor(seconds / 60);
+    var s = seconds % 60;
+    document.getElementById(id).innerText = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  // Конфигурация доски
+  var config = {
+    position: 'start',
+    draggable: false, // Отключаем перетаскивание для режима кликов
+    pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+  };
+
+  board = ChessBoard('board', config);
+
+  // Привязываем событие клика к клеткам доски через jQuery
+  $('#board').on('click', '.square-55d63', function() {
+    var square = $(this).data('square');
+    onSquareClick(square);
+  });
+
+</script>
+
+</body>
+</html>
